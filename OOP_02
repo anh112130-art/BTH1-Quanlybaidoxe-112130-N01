@@ -1,0 +1,213 @@
+#include <iostream>
+#include <string>
+#include <iomanip>
+#include <cstdlib> 
+#include <ctime>   
+
+using namespace std;
+
+int nhap_so_nguyen(string thong_bao) {
+    int x;
+    while (true) {
+        cout << thong_bao;
+        cin >> x;
+        if (cin.fail()) {
+            cout << "-> Loi: Vui long nhap mot so nguyen hop le!\n";
+            cin.clear();
+            cin.ignore(10000, '\n');
+        } else {
+            cin.ignore(10000, '\n');
+            return x;
+        }
+    }
+}
+
+class phuong_tien {
+private:
+    int ma_xe;
+    string loai_xe;
+    int gio_vao;
+    int tg_do;
+    double phi_do;
+
+public:
+    phuong_tien();
+    phuong_tien(int ma, string loai, int gio, int tg);
+
+    int lay_ma_xe() const;
+    string lay_loai_xe() const;
+    double lay_phi_do() const;
+    double tinh_phi();
+    void hien_thi() const;
+};
+
+phuong_tien::phuong_tien() : ma_xe(0), loai_xe(""), gio_vao(0), tg_do(0), phi_do(0.0) {}
+
+phuong_tien::phuong_tien(int ma, string loai, int gio, int tg)
+    : ma_xe(ma), loai_xe(loai), gio_vao(gio), tg_do(tg) {
+    phi_do = tinh_phi();
+}
+
+int phuong_tien::lay_ma_xe() const { return ma_xe; }
+string phuong_tien::lay_loai_xe() const { return loai_xe; }
+double phuong_tien::lay_phi_do() const { return phi_do; }
+
+double phuong_tien::tinh_phi() {
+    double gia = (loai_xe == "Car") ? 6.0 : (loai_xe == "Motorcycle") ? 4.0 : 2.0;
+    bool cao_diem = (gio_vao >= 6 && gio_vao <= 9) || (gio_vao >= 15 && gio_vao <= 18);
+    double tong = 0;
+    for (int h = 0; h < tg_do; ++h) {
+        if (h < 2) tong += gia * (cao_diem ? 1.30 : 0.95);
+        else       tong += gia * 0.90;
+    }
+    phi_do = tong;
+    return phi_do;
+}
+
+void phuong_tien::hien_thi() const {
+    cout << "  ID: " << ma_xe << " | Loai: " << loai_xe
+         << " | Gio vao: " << gio_vao << "h | Thoi luong: " << tg_do << "h"
+         << " | Phi: $" << fixed << setprecision(2) << phi_do << "\n";
+}
+
+class bai_xe {
+private:
+    int ma_bai;
+    char kich_thuoc;
+    static const int MAX_XE = 3; // Suc chua vat ly toi da
+    phuong_tien ds_xe[MAX_XE];   // Mang tinh chua cac xe
+    int so_xe_hien_tai;          // Kich thuoc logic
+
+    int lay_suc_chua() const {
+        if (kich_thuoc == 'S' || kich_thuoc == 's') return 1;
+        if (kich_thuoc == 'M' || kich_thuoc == 'm') return 2;
+        return 3; // 'L'
+    }
+
+public:
+    bai_xe();
+    bai_xe(int ma, char kt);
+
+    int lay_ma() const;
+    bool da_day() const;
+    int tim_vi_tri_xe(int ma_xe) const;
+    bool them_xe(const phuong_tien& v);
+    bool xoa_xe(int ma_xe);
+    void hien_thi_bai() const;
+    void hien_thi_theo_loai(string loai) const;
+    void thong_ke_loai(string loai, int& dem, double& tong_phi) const;
+};
+
+bai_xe::bai_xe() : ma_bai(0), kich_thuoc('S'), so_xe_hien_tai(0) {}
+
+bai_xe::bai_xe(int ma, char kt) : ma_bai(ma), kich_thuoc(kt), so_xe_hien_tai(0) {}
+
+int bai_xe::lay_ma() const { return ma_bai; }
+
+bool bai_xe::da_day() const {
+    return so_xe_hien_tai >= lay_suc_chua();
+}
+
+int bai_xe::tim_vi_tri_xe(int ma_xe) const {
+    for (int i = 0; i < so_xe_hien_tai; ++i) {
+        if (ds_xe[i].lay_ma_xe() == ma_xe) return i;
+    }
+    return -1;
+}
+
+bool bai_xe::them_xe(const phuong_tien& v) {
+    if (da_day()) return false;
+    ds_xe[so_xe_hien_tai] = v;
+    so_xe_hien_tai++;
+    return true;
+}
+
+bool bai_xe::xoa_xe(int ma_xe) {
+    int pos = tim_vi_tri_xe(ma_xe);
+    if (pos == -1) return false;
+
+    for (int i = pos; i < so_xe_hien_tai - 1; ++i) {
+        ds_xe[i] = ds_xe[i + 1];
+    }
+    so_xe_hien_tai--;
+    return true;
+}
+
+void bai_xe::hien_thi_bai() const {
+    cout << "Bai " << ma_bai << " [Size: " << kich_thuoc << "] - Dang do: "
+         << so_xe_hien_tai << "/" << lay_suc_chua() << " xe\n";
+    for (int i = 0; i < so_xe_hien_tai; ++i) {
+        ds_xe[i].hien_thi();
+    }
+}
+
+void bai_xe::hien_thi_theo_loai(string loai) const {
+    for (int i = 0; i < so_xe_hien_tai; ++i) {
+        if (ds_xe[i].lay_loai_xe() == loai) {
+            cout << "[Bai " << ma_bai << "] ";
+            ds_xe[i].hien_thi();
+        }
+    }
+}
+
+void bai_xe::thong_ke_loai(string loai, int& dem, double& tong_phi) const {
+    dem = 0;
+    tong_phi = 0.0;
+    for (int i = 0; i < so_xe_hien_tai; ++i) {
+        if (ds_xe[i].lay_loai_xe() == loai) {
+            dem++;
+            tong_phi += ds_xe[i].lay_phi_do();
+        }
+    }
+}
+
+class SystemInterface {
+private:
+    static const int MAX_BAI = 10; 
+    bai_xe ds_bai[MAX_BAI];        
+    int so_bai_hien_tai;
+
+public:
+    SystemInterface();
+    bool trung_ma_bai(int pID) const;
+    bool trung_ma_xe(int vID) const;
+    int sinh_ma_ngau_nhien() const;
+    void runMenu();
+};
+
+SystemInterface::SystemInterface() : so_bai_hien_tai(0) {}
+
+bool SystemInterface::trung_ma_bai(int pID) const {
+    for (int i = 0; i < so_bai_hien_tai; ++i) {
+        if (ds_bai[i].lay_ma() == pID) return true;
+    }
+    return false;
+}
+
+bool SystemInterface::trung_ma_xe(int vID) const {
+    for (int i = 0; i < so_bai_hien_tai; ++i) {
+        if (ds_bai[i].tim_vi_tri_xe(vID) != -1) return true;
+    }
+    return false;
+}
+
+int SystemInterface::sinh_ma_ngau_nhien() const {
+    return 1000 + rand() % 9000; // Sinh ma ngau nhien tu 1000 - 9999
+}
+
+void SystemInterface::runMenu() {
+    int chon;
+    while (true) {
+        cout << "\n===== QUAN LY BAI DO XE (GIAI DOAN 2) =====\n";
+        cout << "1. Tao bai do xe moi\n";
+        cout << "2. Them xe vao bai do\n";
+        cout << "3. Xoa mot bai do xe\n";
+        cout << "4. Lay xe ra khoi bai do\n";
+        cout << "5. Hien thi danh sach tat ca bai do\n";
+        cout << "6. Hien thi danh sach xe theo bai cu the\n";
+        cout << "7. Liet ke xe theo loai phuong tien\n";
+        cout << "8. Tom tat phi do xe trung binh\n";
+        cout << "9. Thoat chuong trinh\n";
+        chon = nhap_so_nguyen("Chon chuc nang (1-9): ");
+
+      
